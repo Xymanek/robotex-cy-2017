@@ -19,6 +19,15 @@ void applySpeedControl();
 
 void applyDelayControl();
 
+enum Position
+{
+	Left,
+	Center,
+	Right
+};
+
+Position linePosition = Center;
+
 void setup()
 {
 	pinMode(LED, OUTPUT);
@@ -53,23 +62,41 @@ void loop()
 
 	if (isObstacleLeft == LOW && isObstacleRight == LOW)
 	{
-//		Serial.print("Moving forward");
-		move(true, true);
+		switch (linePosition)
+		{
+		case Left:
+			move(true, false);
+			break;
+
+		case Center:
+			move(true, true);
+			break;
+
+		case Right:
+			move(false, true);
+			break;
+		}
 	}
 	else if (isObstacleLeft == HIGH && isObstacleRight == LOW)
 	{
 //		Serial.print("Moving left");
 		move(true, false);
+
+		linePosition = Right;
 	}
 	else if (isObstacleRight == HIGH && isObstacleLeft == LOW)
 	{
 //		Serial.print("Moving right");
 		move(false, true);
+
+		linePosition = Left;
 	}
 	else
 	{
-//		Serial.print("Stop");
-		move(false, false);
+//		Serial.print("Both sensors found the line");
+		move(true, true);
+
+		linePosition = Center;
 	}
 
 //	Serial.println();
