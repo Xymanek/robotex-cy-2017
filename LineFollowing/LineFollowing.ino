@@ -1,23 +1,10 @@
-const int LED = 13;
+const int leftMotorPin = 6;
+const int rightMotorPin = 5;
 
-const int leftMotorPin = 5;
-const int rightMotorPin = 6;
-
-const int leftDetectorPin = 7;
-const int rightDetectorPin = 8;
+const int leftDetectorPin = 8;
+const int rightDetectorPin = 7;
 
 const int speedControlPin = 1;
-const int delayControlPin = 2;
-
-void move(bool left, bool right);
-
-int fromPotToPercent(float pot);
-
-int fromPercentToMotor(int percent);
-
-void applySpeedControl();
-
-void applyDelayControl();
 
 enum Position
 {
@@ -26,46 +13,54 @@ enum Position
 	Right
 };
 
-Position linePosition = Center;
+void move(bool left, bool right);
+
+void applySpeedControl();
 
 void setup()
 {
-	pinMode(LED, OUTPUT);
-
 	pinMode(leftMotorPin, OUTPUT);
 	pinMode(rightMotorPin, OUTPUT);
 
 	pinMode(leftDetectorPin, INPUT);
 	pinMode(rightDetectorPin, INPUT);
-
-	pinMode(speedControlPin, INPUT);
-	pinMode(delayControlPin, INPUT);
-
-//	Serial.begin(9600);
 }
+
+int MOTOR_ON;
+#define MOTOR_OFF 255
 
 // HIGH = no obstacle = line
 // LOW = obstacle = white
-int isObstacleLeft;
-int isObstacleRight;
+#define LINE_FOUND 0x1
+#define WHITE_FOUND 0x0
 
-int MOTOR_ON;
-const int MOTOR_OFF = 255;
+bool lineLeft;
+bool lineRight;
+
+Position linePosition = Center;
+
+void doNothing() {}
 
 void loop()
 {
 	applySpeedControl();
-	applyDelayControl();
 
-	isObstacleLeft = digitalRead(leftDetectorPin);
-	isObstacleRight = digitalRead(rightDetectorPin);
+	lineLeft = digitalRead(leftDetectorPin) == LINE_FOUND;
+	lineRight = digitalRead(rightDetectorPin) == LINE_FOUND;
 
-	if (isObstacleLeft == LOW && isObstacleRight == LOW)
+	//	doNothing();
+
+	//	move(isObstacleLeft == LINE_FOUND, isObstacleRight == LINE_FOUND);
+	//	move(false, false);
+
+	//	return;
+
+	if (!lineLeft && !lineRight)
 	{
 		switch (linePosition)
 		{
 		case Left:
-			move(true, false);
+			move(false, true);
 			break;
 
 		case Center:
@@ -73,68 +68,34 @@ void loop()
 			break;
 
 		case Right:
-			move(false, true);
+			move(true, false);
 			break;
 		}
 	}
-	else if (isObstacleLeft == HIGH && isObstacleRight == LOW)
+	else if (lineLeft && !lineRight)
 	{
-//		Serial.print("Moving left");
-		move(true, false);
-
-		linePosition = Right;
-	}
-	else if (isObstacleRight == HIGH && isObstacleLeft == LOW)
-	{
-//		Serial.print("Moving right");
+		// Moving left
 		move(false, true);
-
 		linePosition = Left;
+	}
+	else if (!lineLeft && lineRight)
+	{
+		// Moving right
+		move(true, false);
+		linePosition = Right;
 	}
 	else
 	{
-//		Serial.print("Both sensors found the line");
+		// Both sensors found the line
 		move(true, true);
-
 		linePosition = Center;
 	}
-
-//	Serial.println();
 }
-
-int moveDelay;
-
-unsigned long prevTime = 0;
-unsigned long time;
-
-int leftMotorValue;
-int rightMotorValue;
 
 void move(bool left, bool right)
 {
-	if (left && right)
-	{
-		time = millis();
-
-//		Serial.print(" Time: ");
-//		Serial.print(time);
-//		Serial.print(". Prev time: ");
-//		Serial.print(prevTime);
-
-		if (time - prevTime < moveDelay)
-		{
-//			Serial.print(". Skipping due to delay");
-			return;
-		}
-
-		prevTime = time;
-	}
-
-	leftMotorValue = left ? MOTOR_ON : MOTOR_OFF;
-	rightMotorValue = right ? MOTOR_ON : MOTOR_OFF;
-
-	analogWrite(leftMotorPin, leftMotorValue);
-	analogWrite(rightMotorPin, rightMotorValue);
+	analogWrite(leftMotorPin, left ? MOTOR_ON : MOTOR_OFF);
+	analogWrite(rightMotorPin, right ? MOTOR_ON : MOTOR_OFF);
 }
 
 int fromPotToPercent(float pot)
@@ -150,17 +111,4 @@ int fromPercentToMotor(int percent)
 void applySpeedControl()
 {
 	MOTOR_ON = fromPercentToMotor(fromPotToPercent(analogRead(speedControlPin)));
-
-//	Serial.print("Speed: ");
-//	Serial.print(MOTOR_ON);
-//	Serial.print(". ");
-}
-
-void applyDelayControl()
-{
-	moveDelay = 100 + fromPotToPercent(analogRead(delayControlPin));
-
-//	Serial.print("Delay: ");
-//	Serial.print(moveDelay);
-//	Serial.print(". ");
 }
