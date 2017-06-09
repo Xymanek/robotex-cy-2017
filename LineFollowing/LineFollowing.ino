@@ -39,8 +39,6 @@ bool lineRight;
 
 Position linePosition = Center;
 
-void doNothing() {}
-
 void loop()
 {
 	applySpeedControl();
@@ -48,12 +46,10 @@ void loop()
 	lineLeft = digitalRead(leftDetectorPin) == LINE_FOUND;
 	lineRight = digitalRead(rightDetectorPin) == LINE_FOUND;
 
-	//	doNothing();
+	//move(isObstacleLeft == LINE_FOUND, isObstacleRight == LINE_FOUND);
+	//move(false, false);
 
-	//	move(isObstacleLeft == LINE_FOUND, isObstacleRight == LINE_FOUND);
-	//	move(false, false);
-
-	//	return;
+	//return;
 
 	if (!lineLeft && !lineRight)
 	{
